@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+hr-bot/backend/node_modules/
+hr-bot/frontend/node_modules/
+
+# Database file (auto-created on first run)
+hr-bot/backend/db/hr_bot.json
+
+# Build output
+hr-bot/frontend/dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
