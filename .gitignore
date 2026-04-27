@@ -7,7 +7,7 @@ hr-bot/frontend/node_modules/
 hr-bot/backend/db/hr_bot.json
 
 # Build output
-hr-bot/frontend/dist/
+# hr-bot/frontend/dist/
 
 # Logs
 *.log
