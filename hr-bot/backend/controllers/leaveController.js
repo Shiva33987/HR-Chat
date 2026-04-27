@@ -124,6 +124,16 @@ const leaveController = {
       console.error("Error fetching stats:", err);
       res.status(500).json({ error: "Internal server error" });
     }
+  },
+  // GET /api/leaves/balances/:employee_id
+  async getBalances(req, res) {
+    try {
+      const balances = LeaveModel.getBalances(req.params.employee_id);
+      res.json({ success: true, data: balances });
+    } catch (err) {
+      console.error("Error fetching balances:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 };
 

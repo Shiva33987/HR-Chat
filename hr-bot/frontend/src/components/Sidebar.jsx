@@ -28,7 +28,13 @@ const PlusIcon = () => (
   </svg>
 );
 
-export default function Sidebar({ activeView, onNavigate, onNewChat }) {
+const LogoutIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+  </svg>
+);
+
+export default function Sidebar({ user, activeView, onNavigate, onNewChat, onLogout }) {
   const handleNewChat = () => {
     onNewChat();
     onNavigate("chat");
@@ -44,32 +50,58 @@ export default function Sidebar({ activeView, onNavigate, onNewChat }) {
       </div>
 
       {/* New Chat button */}
-      <div className="sidebar-new-chat">
-        <button className="new-chat-btn" onClick={handleNewChat} aria-label="Start new chat">
-          <PlusIcon />
-          New Chat
-        </button>
-      </div>
+      {user.role === 'employee' && (
+        <div className="sidebar-new-chat">
+          <button className="new-chat-btn" onClick={handleNewChat} aria-label="Start new chat">
+            <PlusIcon />
+            New Chat
+          </button>
+        </div>
+      )}
 
       <nav className="sidebar-nav">
-        <button
-          className={`sidebar-nav-item ${activeView === "chat" ? "active" : ""}`}
-          onClick={() => onNavigate("chat")}
-          aria-current={activeView === "chat" ? "page" : undefined}
-        >
-          <ChatIcon />
-          <span>Chat</span>
-        </button>
+        {user.role === 'admin' ? (
+          <button
+            className={`sidebar-nav-item ${activeView === "dashboard" ? "active" : ""}`}
+            onClick={() => onNavigate("dashboard")}
+          >
+            <HistoryIcon />
+            <span>Dashboard</span>
+          </button>
+        ) : (
+          <>
+            <button
+              className={`sidebar-nav-item ${activeView === "chat" ? "active" : ""}`}
+              onClick={() => onNavigate("chat")}
+            >
+              <ChatIcon />
+              <span>Chat</span>
+            </button>
 
-        <button
-          className={`sidebar-nav-item ${activeView === "history" ? "active" : ""}`}
-          onClick={() => onNavigate("history")}
-          aria-current={activeView === "history" ? "page" : undefined}
-        >
-          <HistoryIcon />
-          <span>History</span>
-        </button>
+            <button
+              className={`sidebar-nav-item ${activeView === "history" ? "active" : ""}`}
+              onClick={() => onNavigate("history")}
+            >
+              <HistoryIcon />
+              <span>My History</span>
+            </button>
+          </>
+        )}
       </nav>
+
+      {/* User profile and logout */}
+      <div className="sidebar-footer">
+        <div className="user-profile">
+          <div className="user-avatar">{user.name.split(' ').map(n => n[0]).join('')}</div>
+          <div className="user-info">
+            <span className="user-name">{user.name}</span>
+            <span className="user-role">{user.role.toUpperCase()}</span>
+          </div>
+        </div>
+        <button className="logout-btn" onClick={onLogout} title="Logout">
+          <LogoutIcon />
+        </button>
+      </div>
     </aside>
   );
 }

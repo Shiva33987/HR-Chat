@@ -92,7 +92,7 @@ const QUICK_ACTIONS = [
   }
 ];
 
-export default function ChatUI({ backendOnline, sessionId }) {
+export default function ChatUI({ backendOnline, sessionId, user }) {
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -245,24 +245,22 @@ export default function ChatUI({ backendOnline, sessionId }) {
       </div>
 
       {/* Quick Actions */}
-      {showQuickActions && (
-        <div className="quick-actions" role="group" aria-label="Quick actions">
-          {QUICK_ACTIONS.map((action) => (
-            <button
-              key={action.id}
-              className="quick-action-card"
-              onClick={() => handleQuickAction(action)}
-              aria-label={action.title}
-            >
-              <span className="quick-action-icon" aria-hidden="true">{action.icon}</span>
-              <div className="quick-action-text">
-                <span className="quick-action-title">{action.title}</span>
-                <span className="quick-action-subtitle">{action.subtitle}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="quick-actions" role="group" aria-label="Quick actions">
+        {QUICK_ACTIONS.map((action) => (
+          <button
+            key={action.id}
+            className="quick-action-card"
+            onClick={() => handleQuickAction(action)}
+            aria-label={action.title}
+          >
+            <span className="quick-action-icon" aria-hidden="true">{action.icon}</span>
+            <div className="quick-action-text">
+              <span className="quick-action-title">{action.title}</span>
+              <span className="quick-action-subtitle">{action.subtitle}</span>
+            </div>
+          </button>
+        ))}
+      </div>
 
       {/* Input */}
       <div className="chat-input-area">
@@ -293,12 +291,14 @@ export default function ChatUI({ backendOnline, sessionId }) {
       {/* Modals */}
       {modal === "leave" && (
         <LeaveForm
+          user={user}
           onClose={() => setModal(null)}
           onSuccess={handleLeaveSuccess}
         />
       )}
       {modal === "expense" && (
         <ExpenseForm
+          user={user}
           onClose={() => setModal(null)}
           onSuccess={handleExpenseSuccess}
         />

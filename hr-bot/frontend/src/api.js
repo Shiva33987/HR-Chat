@@ -22,6 +22,13 @@ async function request(path, options = {}) {
 export const checkHealth = () =>
   fetch(`${BASE_URL}/health`).then(r => r.ok).catch(() => false);
 
+// Auth
+export const login = (email, password) =>
+  request("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password })
+  });
+
 // Chat
 export const sendMessage = (message, session_id) =>
   request("/chat", {
@@ -55,6 +62,9 @@ export const updateLeaveStatus = (id, status) =>
 
 export const deleteLeave = (id) =>
   request(`/leaves/${id}`, { method: "DELETE" });
+
+export const getLeaveBalances = (employee_id) =>
+  request(`/leaves/balances/${employee_id}`);
 
 // Expenses
 export const createExpense = (data) =>

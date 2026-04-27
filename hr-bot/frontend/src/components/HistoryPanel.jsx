@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getLeaves, getExpenses, updateLeaveStatus, updateExpenseStatus, deleteLeave, deleteExpense } from "../api.js";
+import { getLeaves, getExpenses, updateLeaveStatus, updateExpenseStatus, deleteLeave, deleteExpense, getLeaveBalances } from "../api.js";
 import "./HistoryPanel.css";
 
 const TABS = [
@@ -32,10 +32,11 @@ function formatDate(dateStr) {
   });
 }
 
-export default function HistoryPanel({ backendOnline }) {
+export default function HistoryPanel({ backendOnline, user }) {
   const [activeTab, setActiveTab] = useState("leaves");
   const [leaves, setLeaves] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [balances, setBalances] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
@@ -52,8 +53,21 @@ export default function HistoryPanel({ backendOnline }) {
         getLeaves(),
         getExpenses()
       ]);
-      setLeaves(leavesRes.data || []);
-      setExpenses(expensesRes.data || []);
+      
+      // Filter if employee
+      if (user.role === 'employee') {
+        const filteredLeaves = (leavesRes.data || []).filter(l => l.employee_id === user.id);
+        const filteredExpenses = (expensesRes.data || []).filter(e => e.employee_id === user.id);
+        setLeaves(filteredLeaves);
+        setExpenses(filteredExpenses);
+
+        // Fetch balances for employee
+        const balanceRes = await getLeaveBalances(user.id);
+        setBalances(balanceRes.data);
+      } else {
+        setLeaves(leavesRes.data || []);
+        setExpenses(expensesRes.data || []);
+      }
     } catch (err) {
       setError("Cannot reach the backend. Make sure it's running: cd hr-bot/backend && node app.js");
     } finally {
@@ -114,15 +128,37 @@ export default function HistoryPanel({ backendOnline }) {
   return (
     <div className="history-panel">
       <header className="history-header">
-        <h1 className="history-title">Request History</h1>
-        <button className="refresh-btn" onClick={loadData} disabled={loading} aria-label="Refresh">
+        <h1 className="history-title">{user.role === 'admin' ? "All Requests" : "My Requests"}</h1>
+        <div className="history-header-actions">
+          {user.role === 'employee' && balances && (
+            <div className="employee-stats">
+              <div className="emp-stat">
+                <span className="stat-label">Total Pending</span>
+                <span className="stat-value text-yellow">
+                  {leaves.filter(l => l.status === 'pending').length}
+                </span>
+              </div>
+              <div className="emp-stat">
+                <span className="stat-label">Approved</span>
+                <span className="stat-value text-green">
+                  {leaves.filter(l => l.status === 'approved').length}
+                </span>
+              </div>
+              <div className="emp-stat">
+                <span className="stat-label">Annual Balance</span>
+                <span className="stat-value text-green">{balances.annual}d</span>
+              </div>
+            </div>
+          )}
+          <button className="refresh-btn" onClick={loadData} disabled={loading} aria-label="Refresh">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={loading ? "spin" : ""}>
             <polyline points="23 4 23 10 17 10" />
             <polyline points="1 20 1 14 7 14" />
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
           </svg>
-          Refresh
+          <span>Refresh</span>
         </button>
+        </div>
       </header>
 
       <div className="history-tabs" role="tablist">
@@ -199,47 +235,61 @@ export default function HistoryPanel({ backendOnline }) {
                     </div>
                   </div>
 
-                  {leave.status === "pending" ? (
-                    <div className="history-card-actions">
-                      <button
-                        className="action-btn action-btn--approve"
-                        onClick={() => handleLeaveStatus(leave.id, "approved")}
-                        disabled={!!actionLoading}
-                      >
-                        {actionLoading === leave.id + "approved" ? "..." : "Approve"}
-                      </button>
-                      <button
-                        className="action-btn action-btn--reject"
-                        onClick={() => handleLeaveStatus(leave.id, "rejected")}
-                        disabled={!!actionLoading}
-                      >
-                        {actionLoading === leave.id + "rejected" ? "..." : "Reject"}
-                      </button>
-                      <button
-                        className="action-btn action-btn--delete"
-                        onClick={() => handleDeleteLeave(leave.id)}
-                        disabled={!!actionLoading}
-                      >
-                        Delete
-                      </button>
-                    </div>
+                  {user.role === "admin" ? (
+                    leave.status === "pending" ? (
+                      <div className="history-card-actions">
+                        <button
+                          className="action-btn action-btn--approve"
+                          onClick={() => handleLeaveStatus(leave.id, "approved")}
+                          disabled={!!actionLoading}
+                        >
+                          {actionLoading === leave.id + "approved" ? "..." : "Approve"}
+                        </button>
+                        <button
+                          className="action-btn action-btn--reject"
+                          onClick={() => handleLeaveStatus(leave.id, "rejected")}
+                          disabled={!!actionLoading}
+                        >
+                          {actionLoading === leave.id + "rejected" ? "..." : "Reject"}
+                        </button>
+                        <button
+                          className="action-btn action-btn--delete"
+                          onClick={() => handleDeleteLeave(leave.id)}
+                          disabled={!!actionLoading}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="history-card-actions">
+                        <button
+                          className="action-btn action-btn--reset"
+                          onClick={() => handleLeaveStatus(leave.id, "pending")}
+                          disabled={!!actionLoading}
+                        >
+                          {actionLoading === leave.id + "pending" ? "..." : "↩ Reset to Pending"}
+                        </button>
+                        <button
+                          className="action-btn action-btn--delete"
+                          onClick={() => handleDeleteLeave(leave.id)}
+                          disabled={!!actionLoading}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )
                   ) : (
-                    <div className="history-card-actions">
-                      <button
-                        className="action-btn action-btn--reset"
-                        onClick={() => handleLeaveStatus(leave.id, "pending")}
-                        disabled={!!actionLoading}
-                      >
-                        {actionLoading === leave.id + "pending" ? "..." : "↩ Reset to Pending"}
-                      </button>
-                      <button
-                        className="action-btn action-btn--delete"
-                        onClick={() => handleDeleteLeave(leave.id)}
-                        disabled={!!actionLoading}
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    leave.status === "pending" && (
+                      <div className="history-card-actions">
+                        <button
+                          className="action-btn action-btn--delete"
+                          onClick={() => handleDeleteLeave(leave.id)}
+                          disabled={!!actionLoading}
+                        >
+                          Cancel Request
+                        </button>
+                      </div>
+                    )
                   )}
                 </div>
               ))}
@@ -287,47 +337,61 @@ export default function HistoryPanel({ backendOnline }) {
                     </div>
                   </div>
 
-                  {expense.status === "pending" ? (
-                    <div className="history-card-actions">
-                      <button
-                        className="action-btn action-btn--approve"
-                        onClick={() => handleExpenseStatus(expense.id, "approved")}
-                        disabled={!!actionLoading}
-                      >
-                        {actionLoading === expense.id + "approved" ? "..." : "Approve"}
-                      </button>
-                      <button
-                        className="action-btn action-btn--reject"
-                        onClick={() => handleExpenseStatus(expense.id, "rejected")}
-                        disabled={!!actionLoading}
-                      >
-                        {actionLoading === expense.id + "rejected" ? "..." : "Reject"}
-                      </button>
-                      <button
-                        className="action-btn action-btn--delete"
-                        onClick={() => handleDeleteExpense(expense.id)}
-                        disabled={!!actionLoading}
-                      >
-                        Delete
-                      </button>
-                    </div>
+                  {user.role === "admin" ? (
+                    expense.status === "pending" ? (
+                      <div className="history-card-actions">
+                        <button
+                          className="action-btn action-btn--approve"
+                          onClick={() => handleExpenseStatus(expense.id, "approved")}
+                          disabled={!!actionLoading}
+                        >
+                          {actionLoading === expense.id + "approved" ? "..." : "Approve"}
+                        </button>
+                        <button
+                          className="action-btn action-btn--reject"
+                          onClick={() => handleExpenseStatus(expense.id, "rejected")}
+                          disabled={!!actionLoading}
+                        >
+                          {actionLoading === expense.id + "rejected" ? "..." : "Reject"}
+                        </button>
+                        <button
+                          className="action-btn action-btn--delete"
+                          onClick={() => handleDeleteExpense(expense.id)}
+                          disabled={!!actionLoading}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="history-card-actions">
+                        <button
+                          className="action-btn action-btn--reset"
+                          onClick={() => handleExpenseStatus(expense.id, "pending")}
+                          disabled={!!actionLoading}
+                        >
+                          {actionLoading === expense.id + "pending" ? "..." : "↩ Reset to Pending"}
+                        </button>
+                        <button
+                          className="action-btn action-btn--delete"
+                          onClick={() => handleDeleteExpense(expense.id)}
+                          disabled={!!actionLoading}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )
                   ) : (
-                    <div className="history-card-actions">
-                      <button
-                        className="action-btn action-btn--reset"
-                        onClick={() => handleExpenseStatus(expense.id, "pending")}
-                        disabled={!!actionLoading}
-                      >
-                        {actionLoading === expense.id + "pending" ? "..." : "↩ Reset to Pending"}
-                      </button>
-                      <button
-                        className="action-btn action-btn--delete"
-                        onClick={() => handleDeleteExpense(expense.id)}
-                        disabled={!!actionLoading}
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    expense.status === "pending" && (
+                      <div className="history-card-actions">
+                        <button
+                          className="action-btn action-btn--delete"
+                          onClick={() => handleDeleteExpense(expense.id)}
+                          disabled={!!actionLoading}
+                        >
+                          Cancel Request
+                        </button>
+                      </div>
+                    )
                   )}
                 </div>
               ))}

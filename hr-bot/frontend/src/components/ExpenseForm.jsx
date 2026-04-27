@@ -15,10 +15,10 @@ const CURRENCIES = ["USD", "EUR", "GBP", "INR", "AUD", "CAD"];
 
 const today = new Date().toISOString().split("T")[0];
 
-export default function ExpenseForm({ onClose, onSuccess }) {
+export default function ExpenseForm({ onClose, onSuccess, user }) {
   const [form, setForm] = useState({
-    employee_name: "",
-    employee_id: "",
+    employee_name: user?.name || "",
+    employee_id: user?.id || "",
     category: "travel",
     amount: "",
     currency: "USD",
@@ -86,6 +86,7 @@ export default function ExpenseForm({ onClose, onSuccess }) {
                 onChange={handleChange}
                 placeholder="John Doe"
                 autoComplete="name"
+                readOnly
               />
               {errors.employee_name && <span className="form-error" role="alert">{errors.employee_name}</span>}
             </div>
@@ -100,6 +101,7 @@ export default function ExpenseForm({ onClose, onSuccess }) {
                 value={form.employee_id}
                 onChange={handleChange}
                 placeholder="EMP001"
+                readOnly
               />
               {errors.employee_id && <span className="form-error" role="alert">{errors.employee_id}</span>}
             </div>

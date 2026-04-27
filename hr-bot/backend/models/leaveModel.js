@@ -51,6 +51,15 @@ const LeaveModel = {
       stats[key].total_days += r.days_count;
     }
     return Object.values(stats);
+  },
+  
+  getBalances(employee_id) {
+    const balance = db.get("leave_balances").find({ employee_id }).value();
+    if (!balance) {
+      // Default balance if none exists
+      return { employee_id, annual: 20, sick: 10, personal: 5 };
+    }
+    return balance;
   }
 };
 

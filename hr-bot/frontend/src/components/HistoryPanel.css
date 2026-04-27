@@ -15,6 +15,43 @@
   flex-shrink: 0;
 }
 
+.history-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.employee-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.emp-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.emp-stat .stat-label {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.emp-stat .stat-value {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.text-yellow { color: #ca8a04; }
+.text-green { color: #16a34a; }
+.text-purple { color: #7c3aed; }
+
 .history-title {
   font-size: 18px;
   font-weight: 700;
